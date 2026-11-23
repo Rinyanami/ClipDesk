@@ -1,0 +1,13 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <NuGetAudit>true</NuGetAudit>
+    <Version>0.4.0</Version>
+    <AssemblyVersion>0.4.0.0</AssemblyVersion>
+    <FileVersion>0.4.0.0</FileVersion>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+.packages/
+.build-home/
+.tools/
+artifacts/
+test-data/
+*.user
+*.clipdesk-key
+*.clipdesk.zip
