@@ -1,0 +1,32 @@
+name: Windows build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build, verify and package portable
+        shell: pwsh
+        run: ./build.ps1 -Portable -Verify
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ClipDesk-win-x64
+          path: artifacts/ClipDesk-*-win-x64.zip
+          if-no-files-found: error
+          retention-days: 14
