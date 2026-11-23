@@ -8,12 +8,21 @@ $compiler = Join-Path $compilerRoot 'makensis.exe'
 $bootstrap = Join-Path $projectRoot '.tools\nsis-3.13.zip'
 $expectedHash = 'BA63DFFC4410EE89193E1CB5A41989991BD77C61068DA17E3156D136B7B0B3D8'
 if (-not (Test-Path -LiteralPath $compiler)) {
-    if (-not (Test-Path -LiteralPath $bootstrap)) {
-        throw '请将官方 NSIS 3.13 ZIP 放入 .tools\nsis-3.13.zip；官网 https://nsis.sourceforge.io/Download'
+    $systemMakensis = @('C:\Program Files (x86)\NSIS\makensis.exe', 'C:\Program Files\NSIS\makensis.exe') | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+    if (-not $systemMakensis) {
+        $cmd = Get-Command makensis.exe -ErrorAction SilentlyContinue
+        if ($cmd) { $systemMakensis = $cmd.Source }
     }
-    if ((Get-FileHash -LiteralPath $bootstrap -Algorithm SHA256).Hash -ne $expectedHash) { throw '编译器安装包 SHA-256 不匹配' }
-    Expand-Archive -LiteralPath $bootstrap -DestinationPath (Join-Path $projectRoot '.tools') -Force
-    if (-not (Test-Path -LiteralPath $compiler)) { throw '编译器解压失败' }
+    if ($systemMakensis) {
+        $compiler = $systemMakensis
+    } else {
+        if (-not (Test-Path -LiteralPath $bootstrap)) {
+            throw '请将官方 NSIS 3.13 ZIP 放入 .tools\nsis-3.13.zip；官网 https://nsis.sourceforge.io/Download'
+        }
+        if ((Get-FileHash -LiteralPath $bootstrap -Algorithm SHA256).Hash -ne $expectedHash) { throw '编译器安装包 SHA-256 不匹配' }
+        Expand-Archive -LiteralPath $bootstrap -DestinationPath (Join-Path $projectRoot '.tools') -Force
+        if (-not (Test-Path -LiteralPath $compiler)) { throw '编译器解压失败' }
+    }
 }
 if ($PrepareCompiler) { Write-Output "编译器已就绪：$compiler"; return }
 [xml]$props = Get-Content -LiteralPath (Join-Path $projectRoot 'Directory.Build.props') -Raw
@@ -22,6 +31,7 @@ $application = Join-Path $projectRoot 'artifacts\ClipDesk\ClipDesk.exe'
 if (-not (Test-Path -LiteralPath $application)) { throw '请先执行 build.ps1 -Portable -Verify' }
 if ((Get-Item -LiteralPath $application).VersionInfo.ProductVersion -notlike "$version*") { throw '发布目录的程序版本不匹配' }
 $payload = Join-Path $projectRoot 'artifacts\ClipDesk'
+New-Item -ItemType Directory -Path (Join-Path $projectRoot '.tools') -Force | Out-Null
 $uninstallList = Join-Path $projectRoot '.tools\uninstall-files.nsh'
 $lines = [Collections.Generic.List[string]]::new()
 foreach ($file in Get-ChildItem -LiteralPath $payload -File -Recurse) {

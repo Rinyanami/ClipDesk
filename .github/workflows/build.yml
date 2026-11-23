@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -24,9 +24,24 @@ jobs:
       - name: Build, verify and package portable
         shell: pwsh
         run: ./build.ps1 -Portable -Verify
+      - name: Build Windows installer
+        shell: pwsh
+        run: ./package.ps1
       - uses: actions/upload-artifact@v4
         with:
           name: ClipDesk-win-x64
-          path: artifacts/ClipDesk-*-win-x64.zip
+          path: |
+            artifacts/ClipDesk-*-win-x64-setup.exe
+            artifacts/ClipDesk-*-win-x64.zip
           if-no-files-found: error
           retention-days: 14
+      - name: Upload release assets
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $files = @(Get-ChildItem -Path 'artifacts' -File | Where-Object { $_.Name -like 'ClipDesk-0.4.0-win-x64*' } | ForEach-Object { $_.FullName })
+          if ($files.Count -gt 0) {
+            gh release upload v0.4.0 @files --clobber
+          }
